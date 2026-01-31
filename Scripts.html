@@ -1,0 +1,33 @@
+<script>
+  /**
+   * Scripts principais do Guardião SEDF
+   * Comunicação Client-Server segura.
+   */
+
+  function initApp() {
+    google.script.run
+      .withSuccessHandler(renderUserWidget)
+      .withFailureHandler(onFatalError)
+      .getClientSideUser();
+  }
+
+  function renderUserWidget(user) {
+    const userEl = document.getElementById('user-profile');
+    if (userEl && user) {
+      userEl.innerHTML = `
+         <span class="user-name">${user.name}</span>
+         <span class="badge badge-${user.role.toLowerCase()}">${user.role}</span>
+       `;
+    }
+  }
+
+  function onFatalError(error) {
+    console.error('Erro Crítico no Guardião:', error);
+    // Notifica via UI (Assumindo toast ou modal disponível no Index.html)
+    if (typeof showNotification === 'function') {
+      showNotification('Falha na comunicação com o servidor GDF', 'error');
+    }
+  }
+
+  window.onload = initApp;
+</script>

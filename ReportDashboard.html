@@ -1,0 +1,11 @@
+<div class="report-dashboard">
+  <h2>Relatórios e Estatísticas</h2>
+  
+  <div class="report-grid">
+    <?!= include('ChartContainer'); ?>
+    <?!= include('ComplianceReport'); ?>
+    <?!= include('PerformanceMetrics'); ?>
+  </div>
+  
+  <button class="btn-primary" onclick="exportReport()">Exportar Relatório</button>
+</div>

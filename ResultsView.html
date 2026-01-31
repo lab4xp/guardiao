@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validação de Resultados - Human-in-the-Loop</title>
+  <style>
+    .results-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .results-header {
+      background-color: var(--bg-secondary);
+      padding: var(--spacing-lg);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--neon-cyan);
+      box-shadow: var(--shadow-neon-cyan);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .results-title {
+      font-size: 2rem;
+      color: var(--neon-cyan);
+      text-shadow: var(--shadow-neon-cyan);
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .results-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+    
+    .results-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+    }
+    
+    .stat-box {
+      background-color: var(--bg-card);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+    
+    .stat-box-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .stat-box-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .document-preview {
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-color);
+      margin-bottom: var(--spacing-xl);
+      overflow: hidden;
+    }
+    
+    .preview-header {
+      background-color: var(--bg-card);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .preview-title {
+      font-size: 1.25rem;
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+    
+    .preview-toggle {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+    
+    .toggle-btn {
+      padding: var(--spacing-xs) var(--spacing-md);
+      background-color: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-size: 0.875rem;
+    }
+    
+    .toggle-btn.active {
+      background-color: var(--neon-cyan);
+      color: var(--bg-dark);
+      border-color: var(--neon-cyan);
+      box-shadow: var(--shadow-neon-cyan);
+    }
+    
+    .preview-content {
+      padding: var(--spacing-lg);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .pii-highlight {
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    
+    .pii-cpf { background-color: rgba(0, 255, 255, 0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+    .pii-pessoa { background-color: rgba(0, 255, 255, 0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+    .pii-email { background-color: rgba(0, 255, 255, 0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+    .pii-telefone { background-color: rgba(0, 255, 255, 0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+    .pii-sensivel { background-color: rgba(255, 0, 255, 0.3); color: var(--neon-magenta); border: 1px solid var(--neon-magenta); }
+    
+    .pii-highlight:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 8px currentColor;
+    }
+    
+    .detections-list {
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-color);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .detections-header {
+      background-color: var(--bg-card);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .detections-title {
+      font-size: 1.25rem;
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+    
+    .detections-body {
+      padding: var(--spacing-lg);
+    }
+    
+    .detection-item {
+      background-color: var(--bg-card);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      margin-bottom: var(--spacing-md);
+      transition: all var(--transition-fast);
+    }
+    
+    .detection-item:hover {
+      border-color: var(--neon-cyan);
+      box-shadow: var(--shadow-neon-cyan);
+    }
+
+    .detection-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .detection-type {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .detection-confidence {
+      font-size: 0.875rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      background-color: var(--bg-secondary);
+    }
+    
+    .confidence-high { color: var(--neon-green); border: 1px solid var(--neon-green); }
+    .confidence-medium { color: var(--neon-yellow); border: 1px solid var(--neon-yellow); }
+    .confidence-low { color: var(--neon-red); border: 1px solid var(--neon-red); }
+    
+    .detection-value {
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+      padding: var(--spacing-xs);
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+    
+    .detection-context {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+      padding: var(--spacing-xl);
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--neon-green);
+      box-shadow: var(--shadow-neon-green);
+    }
+    
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md) var(--spacing-xl);
+      font-size: 1.125rem;
+      font-weight: 600;
+      border: 2px solid;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-approve {
+      background-color: transparent;
+      color: var(--neon-green);
+      border-color: var(--neon-green);
+    }
+    
+    .btn-approve:hover {
+      background-color: var(--neon-green);
+      color: var(--bg-dark);
+      box-shadow: var(--shadow-neon-green);
+      transform: translateY(-2px);
+    }
+    
+    .btn-edit {
+      background-color: transparent;
+      color: var(--neon-yellow);
+      border-color: var(--neon-yellow);
+    }
+    
+    .btn-edit:hover {
+      background-color: var(--neon-yellow);
+      color: var(--bg-dark);
+      transform: translateY(-2px);
+    }
+    
+    .btn-reject {
+      background-color: transparent;
+      color: var(--neon-red);
+      border-color: var(--neon-red);
+    }
+    
+    .btn-reject:hover {
+      background-color: var(--neon-red);
+      color: var(--bg-dark);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="results-container">
+    
+    <!-- Header -->
+    <div class="results-header">
+      <h1 class="results-title">
+        <span>👁️</span>
+        Human-in-the-Loop: Validação de Resultados
+      </h1>
+      <p class="results-subtitle">
+        Revise as detecções de PII e aprove, edite ou rejeite a anonimização sugerida
+      </p>
+      
+      <div class="results-stats">
+        <div class="stat-box">
+          <div class="stat-box-value text-cyan" id="totalPII">0</div>
+          <div class="stat-box-label">PIIs Detectados</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-box-value text-magenta" id="totalSensivel">0</div>
+          <div class="stat-box-label">Dados Sensíveis</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-value text-green" id="confiancaMedia">0%</div>
+          <div class="stat-box-label">Confiança Média</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-value text-yellow" id="statusCompliance">-</div>
+          <div class="stat-box-label">Compliance LGPD</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Preview do Documento -->
+    <div class="document-preview">
+      <div class="preview-header">
+        <h2 class="preview-title">📄 Preview do Documento</h2>
+        <div class="preview-toggle">
+          <button class="toggle-btn active" onclick="togglePreview('original')">Original</button>
+          <button class="toggle-btn" onclick="togglePreview('anonimizado')">Anonimizado</button>
+          <button class="toggle-btn" onclick="togglePreview('comparacao')">Comparação</button>
+        </div>
+      </div>
+      <div class="preview-content" id="previewContent">
+        Carregando documento...
+      </div>
+    </div>
+    
+    <!-- Lista de Detecções -->
+    <div class="detections-list">
+      <div class="detections-header">
+        <h2 class="detections-title">🔍 Detecções de PII</h2>
+      </div>
+      <div class="detections-body" id="detectionsBody">
+        <!-- Detecções serão inseridas aqui via JavaScript -->
+      </div>
+    </div>
+    
+    <!-- Botões de Ação -->
+    <div class="action-buttons">
+      <button class="action-btn btn-approve" onclick="aprovarResultado()">
+        <span>✓</span>
+        Aprovar Redação
+      </button>
+      <button class="action-btn btn-edit" onclick="editarResultado()">
+        <span>✎</span>
+        Editar Manualmente
+      </button>
+      <button class="action-btn btn-reject" onclick="rejeitarResultado()">
+        <span>✗</span>
+        Rejeitar
+      </button>
+    </div>
+
+  </div>
+  
+  <script>
+    // ========================================================================
+    // DADOS GLOBAIS
+    // ========================================================================
+    
+    let resultadoAtual = null;
+    let modoPreview = 'original';
+    
+    // ========================================================================
+    // INICIALIZAÇÃO
+    // ========================================================================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('ResultsView inicializado');
+      carregarResultado();
+    });
+    
+    // ========================================================================
+    // CARREGAMENTO DE DADOS
+    // ========================================================================
+    
+    function carregarResultado() {
+      // Simula carregamento de resultado
+      // Em produção, buscar via google.script.run
+      
+      resultadoAtual = {
+        id: 'RES_001',
+        textoOriginal: `Dados do servidor:
+Nome: João da Silva
+CPF: 123.456.789-09
+Email: joao.silva@educacao.df.gov.br
+Telefone: (61) 98765-4321
+Cargo: Professor
+Matrícula: 1234567-8`,
+        textoAnonimizado: `Dados do servidor:
+Nome: [NOME_A1B2C3D4]
+CPF: 123.***.***.***-09
+Email: ***@***.***
+Telefone: (**) ****-****
+Cargo: Professor
+Matrícula: [MATRICULA_E5F6G7H8]`,
+        deteccoes: [
+          {
+            tipo: 'PESSOA',
+            valor: 'João da Silva',
+            confianca: 0.95,
+            posicao: 25,
+            contexto: 'Nome: João da Silva',
+            metodo: 'NER (spaCy)',
+            nivelRisco: 'ALTO'
+          },
+          {
+            tipo: 'CPF',
+            valor: '123.456.789-09',
+            confianca: 1.0,
+            posicao: 47,
+            contexto: 'CPF: 123.456.789-09',
+            metodo: 'Regex + Módulo 11',
+            nivelRisco: 'ALTO'
+          },
+          {
+            tipo: 'EMAIL',
+            valor: 'joao.silva@educacao.df.gov.br',
+            confianca: 1.0,
+            posicao: 73,
+            contexto: 'Email: joao.silva@educacao.df.gov.br',
+            metodo: 'Regex',
+            nivelRisco: 'ALTO'
+          }
+        ]
+      };
+
+      
+      renderizarResultado();
+    }
+    
+    function renderizarResultado() {
+      if (!resultadoAtual) return;
+      
+      // Atualiza estatísticas
+      document.getElementById('totalPII').textContent = resultadoAtual.deteccoes.length;
+      
+      const sensiveis = resultadoAtual.deteccoes.filter(d => d.nivelRisco === 'CRITICO');
+      document.getElementById('totalSensivel').textContent = sensiveis.length;
+      
+      const confiancaMedia = resultadoAtual.deteccoes.reduce((sum, d) => sum + d.confianca, 0) / resultadoAtual.deteccoes.length;
+      document.getElementById('confiancaMedia').textContent = Math.round(confiancaMedia * 100) + '%';
+      
+      document.getElementById('statusCompliance').textContent = sensiveis.length > 0 ? 'CRÍTICO' : 'OK';
+      
+      // Renderiza preview
+      renderizarPreview();
+      
+      // Renderiza detecções
+      renderizarDeteccoes();
+    }
+    
+    // ========================================================================
+    // PREVIEW
+    // ========================================================================
+    
+    function renderizarPreview() {
+      const previewContent = document.getElementById('previewContent');
+      
+      if (modoPreview === 'original') {
+        previewContent.innerHTML = highlightPII(resultadoAtual.textoOriginal, resultadoAtual.deteccoes);
+      } else if (modoPreview === 'anonimizado') {
+        previewContent.textContent = resultadoAtual.textoAnonimizado;
+      } else if (modoPreview === 'comparacao') {
+        previewContent.innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <h3 style="color: var(--neon-cyan); margin-bottom: 10px;">Original</h3>
+              <div style="background-color: var(--bg-card); padding: 15px; border-radius: 8px;">
+                ${highlightPII(resultadoAtual.textoOriginal, resultadoAtual.deteccoes)}
+              </div>
+            </div>
+            <div>
+              <h3 style="color: var(--neon-green); margin-bottom: 10px;">Anonimizado</h3>
+              <div style="background-color: var(--bg-card); padding: 15px; border-radius: 8px;">
+                ${resultadoAtual.textoAnonimizado}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    
+    function highlightPII(texto, deteccoes) {
+      let resultado = texto;
+      
+      // Ordena por posição decrescente para não afetar índices
+      const deteccoesOrdenadas = [...deteccoes].sort((a, b) => b.posicao - a.posicao);
+      
+      deteccoesOrdenadas.forEach(det => {
+        const antes = resultado.substring(0, det.posicao);
+        const depois = resultado.substring(det.posicao + det.valor.length);
+        const classe = 'pii-' + det.tipo.toLowerCase();
+        const highlighted = `<span class="pii-highlight ${classe}" title="${det.tipo} - ${Math.round(det.confianca * 100)}% confiança">${det.valor}</span>`;
+        resultado = antes + highlighted + depois;
+      });
+      
+      return resultado;
+    }
+    
+    function togglePreview(modo) {
+      modoPreview = modo;
+      
+      // Atualiza botões
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      renderizarPreview();
+    }
+    
+    // ========================================================================
+    // DETECÇÕES
+    // ========================================================================
+    
+    function renderizarDeteccoes() {
+      const container = document.getElementById('detectionsBody');
+      
+      if (resultadoAtual.deteccoes.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Nenhuma detecção encontrada</p>';
+        return;
+      }
+      
+      container.innerHTML = resultadoAtual.deteccoes.map((det, index) => {
+        const confiancaClass = det.confianca >= 0.9 ? 'confidence-high' : 
+                               det.confianca >= 0.7 ? 'confidence-medium' : 
+                               'confidence-low';
+        
+        return `
+          <div class="detection-item">
+            <div class="detection-header">
+              <span class="detection-type text-cyan">${det.tipo}</span>
+              <span class="detection-confidence ${confiancaClass}">
+                ${Math.round(det.confianca * 100)}% confiança
+              </span>
+            </div>
+            <div class="detection-value">${det.valor}</div>
+            <div class="detection-context">"${det.contexto}"</div>
+            <div style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted);">
+              Método: ${det.metodo} | Risco: ${det.nivelRisco}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    
+    // ========================================================================
+    // AÇÕES DO USUÁRIO
+    // ========================================================================
+    
+    function aprovarResultado() {
+      if (!confirm('Confirma a aprovação desta redação?\n\nO texto anonimizado será marcado como aprovado.')) {
+        return;
+      }
+      
+      console.log('Aprovando resultado:', resultadoAtual.id);
+      
+      // Em produção, chamar via google.script.run
+      google.script.run
+        .withSuccessHandler(function(response) {
+          alert('✅ Resultado aprovado com sucesso!\n\nID: ' + resultadoAtual.id);
+          // Redirecionar ou carregar próximo resultado
+        })
+        .withFailureHandler(function(error) {
+          alert('❌ Erro ao aprovar: ' + error.message);
+        })
+        .aprovarResultado({
+          idResultado: resultadoAtual.id,
+          comentario: 'Aprovado via Human-in-the-Loop'
+        });
+    }
+    
+    function editarResultado() {
+      const novoTexto = prompt('Edite o texto anonimizado:', resultadoAtual.textoAnonimizado);
+      
+      if (novoTexto && novoTexto !== resultadoAtual.textoAnonimizado) {
+        resultadoAtual.textoAnonimizado = novoTexto;
+        renderizarPreview();
+        alert('✏️ Texto editado. Revise e aprove quando estiver pronto.');
+      }
+    }
+    
+    function rejeitarResultado() {
+      const motivo = prompt('Informe o motivo da rejeição:');
+      
+      if (!motivo) {
+        return;
+      }
+      
+      console.log('Rejeitando resultado:', resultadoAtual.id, 'Motivo:', motivo);
+      
+      // Em produção, chamar via google.script.run
+      google.script.run
+        .withSuccessHandler(function(response) {
+          alert('✗ Resultado rejeitado.\n\nMotivo: ' + motivo);
+          // Redirecionar ou carregar próximo resultado
+        })
+        .withFailureHandler(function(error) {
+          alert('❌ Erro ao rejeitar: ' + error.message);
+        })
+        .rejeitarResultado({
+          idResultado: resultadoAtual.id,
+          motivo: motivo
+        });
+    }
+    
+  </script>
+</body>
+</html>

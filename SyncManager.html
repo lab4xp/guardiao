@@ -1,0 +1,91 @@
+/**
+* @fileoverview SyncManager - Orquestrador de Sincronia de Dados
+* Monitora conexão e dispara uploads pendentes.
+*/
+
+const SyncManager = (function() {
+
+let isSyncing = false;
+
+/**
+* Tenta sincronizar registros pendentes com o Google Apps Script
+*/
+async function performSync() {
+if (isSyncing || !navigator.onLine) return;
+
+const pending = await OfflineStorage.getPending();
+if (pending.length === 0) return;
+
+isSyncing = true;
+console.log(`[Sync] Iniciando sincronia de ${pending.length} registros...`);
+
+for (const item of pending) {
+try {
+await callServer(item.action, item.data);
+await OfflineStorage.removeSynced(item.id);
+console.log(`[Sync] Item ${item.id} sincronizado com sucesso.`);
+} catch (e) {
+console.warn(`[Sync] Falha ao sincronizar item ${item.id}. Tentará novamente.`, e);
+}
+}
+
+isSyncing = false;
+updateSyncUI();
+}
+
+/**
+* Promisify google.script.run
+*/
+function callServer(action, data) {
+return new Promise((resolve, reject) => {
+// Mapeia ações do cliente para funções do servidor GAS
+const serverMethods = {
+'SAVE_DOC': 'processarDocumentoOffline',
+'LOG_AUDIT': 'registrarEventoAudit'
+};
+
+const method = serverMethods[action];
+if (!method) return reject('Método não mapeado');
+
+google.script.run
+.withSuccessHandler(resolve)
+.withFailureHandler(reject)
+[method](data);
+});
+}
+
+function updateSyncUI() {
+const statusEl = document.getElementById('sync-status');
+if (!statusEl) return;
+
+if (navigator.onLine) {
+statusEl.innerHTML = '<span class="neon-text-green">● Online</span>';
+} else {
+statusEl.innerHTML = '<span class="neon-text-magenta">○ Offline (Modo Local)</span>';
+}
+}
+
+return {
+init: function() {
+window.addEventListener('online', performSync);
+window.addEventListener('offline', updateSyncUI);
+updateSyncUI();
+// Tenta sincronizar ao abrir se online
+if (navigator.onLine) performSync();
+},
+
+execute: async function(action, data) {
+if (navigator.onLine) {
+try {
+return await callServer(action, data);
+} catch (e) {
+console.warn('Falha no server, salvando offline para fallback.');
+return await OfflineStorage.savePending(action, data);
+}
+} else {
+console.log('Offline: Salvando operação localmente.');
+return await OfflineStorage.savePending(action, data);
+}
+}
+};
+})();

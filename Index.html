@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080808">
+  <title>Guardião SEDF | Proteção de Dados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <?!= include('Styles') ?>
+  <?!= include('OfflineStorage') ?>
+  <?!= include('SyncManager') ?>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div style="padding: 30px; text-align: center;">
+        <h2 class="neon-text-cyan">GUARDIÃO</h2>
+        <p style="font-size: 0.7rem; color: var(--text-secondary);">SECRETARIA DE EDUCAÇÃO - DF</p>
+      </div>
+
+      <div style="flex: 1; padding: 10px;">
+        <div class="nav-item" onclick="loadView('dashboard')">📊 Dashboard</div>
+        <div class="nav-item" onclick="loadView('processamento')">📄 Processar Arquivo</div>
+        <div class="nav-item" onclick="loadView('relatorios')">📜 Relatórios LGPD</div>
+        <div class="nav-item" onclick="loadView('auditoria')">🛡️ Auditoria</div>
+      </div>
+
+      <div style="padding: 20px; border-top: 1px solid var(--glass-border);">
+        <div id="sync-status" style="font-size: 0.7rem; margin-bottom: 10px;"></div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">Logado como:</div>
+        <div style="font-size: 0.9rem;" class="neon-text-cyan">
+          <?= user.email ?>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="app-view">
+      <!-- Dashboard inicial -->
+      <?!= include('MainDashboard') ?>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    /**
+     * Gerencia a troca de views sem recarregar a página (SPA)
+     */
+    function loadView(route) {
+      document.getElementById('app-view').innerHTML = '<div class="animate-fade" style="padding: 40px; text-align: center;"><div class="neon-text-cyan">Carregando Módulo...</div></div>';
+
+      google.script.run
+        .withSuccessHandler(function (html) {
+          document.getElementById('app-view').innerHTML = html;
+        })
+        .withFailureHandler(function (err) {
+          alert('Erro ao carregar módulo: ' + err);
+        })
+        .navigateTo(route);
+    }
+
+    // Inicializa gerenciador de sincronia
+    window.addEventListener('load', () => {
+      if (typeof SyncManager !== 'undefined') {
+        SyncManager.init();
+      }
+    });
+  </script>
+  <style>
+    .nav-item {
+      padding: 15px 20px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: 0.3s;
+      color: var(--text-secondary);
+    }
+
+    .nav-item:hover {
+      background: rgba(0, 242, 255, 0.1);
+      color: var(--neon-cyan);
+    }
+  </style>
+</body>
+
+</html>

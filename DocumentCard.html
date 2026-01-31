@@ -1,0 +1,11 @@
+<div class="document-card neon-border">
+  <div class="doc-header">
+    <h4><?= docName ?></h4>
+    <span class="doc-status <?= statusClass ?>"><?= status ?></span>
+  </div>
+  <div class="doc-info">
+    <p>Processado em: <?= processedDate ?></p>
+    <p>PIIs detectados: <?= piiCount ?></p>
+  </div>
+  <button onclick="viewDocument('<?= docId ?>')">Ver Detalhes</button>
+</div>

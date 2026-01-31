@@ -1,0 +1,23 @@
+<div class="audit-log-view">
+  <h2>Logs de Auditoria</h2>
+  
+  <div class="filters">
+    <?!= include('AuditFilters'); ?>
+  </div>
+  
+  <table class="audit-table">
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Usuário</th>
+        <th>Ação</th>
+        <th>Documento</th>
+        <th>Status</th>
+        <th>Detalhes</th>
+      </tr>
+    </thead>
+    <tbody id="auditTableBody">
+      <!-- Dados carregados dinamicamente -->
+    </tbody>
+  </table>
+</div>

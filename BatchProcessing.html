@@ -1,0 +1,19 @@
+<div class="batch-processing">
+  <h2>Processamento em Lote</h2>
+  
+  <div class="batch-config">
+    <label>Pasta do Google Drive:</label>
+    <input type="text" id="driveFolderId" class="form-control" placeholder="ID da pasta">
+    <button onclick="selectFolder()">Selecionar Pasta</button>
+  </div>
+  
+  <div class="file-list" id="fileList">
+    <p>Nenhum arquivo selecionado</p>
+  </div>
+  
+  <button class="btn-primary" onclick="startBatchProcessing()">Iniciar Processamento</button>
+  
+  <div class="batch-progress" id="batchProgress" style="display:none;">
+    <?!= include('BatchProgressView'); ?>
+  </div>
+</div>

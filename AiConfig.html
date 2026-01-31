@@ -1,0 +1,21 @@
+<div class="ai-config">
+  <div class="form-group">
+    <label>URL do Ngrok (Colab):</label>
+    <input type="text" id="ngrokUrl" class="form-control" placeholder="https://xxxxx.ngrok.io">
+    <button onclick="testConnection()">Testar Conexão</button>
+  </div>
+  
+  <div class="form-group">
+    <label>Threshold de Confiança:</label>
+    <input type="range" id="confidenceThreshold" min="0" max="100" value="85">
+    <span id="thresholdValue">85%</span>
+  </div>
+  
+  <div class="form-group">
+    <label>Modelo NER:</label>
+    <select id="nerModel" class="form-control">
+      <option value="pt_core_news_lg">spaCy PT Large</option>
+      <option value="bertimbau">BERTimbau</option>
+    </select>
+  </div>
+</div>
